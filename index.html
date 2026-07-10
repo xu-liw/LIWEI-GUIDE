@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>LIWEI GUIDE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 1. Standard Favicon (All modern browsers) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000053'%3E%3Ccircle cx='12' cy='12' r='2.5' /%3E%3Cpath d='M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8.5 8.8 10.2 10.5 10.8C10.9 10.9 11.5 11 12 11C12.5 11 13.1 10.9 13.5 10.8C15.2 10.2 16.5 8.5 16.5 6.5C16.5 4 14.5 2 12 2Z' /%3E%3Cpath d='M12 22C14.5 22 16.5 20 16.5 17.5C16.5 15.5 15.2 13.8 13.5 13.2C13.1 13.1 12.5 13 12 13C11.5 13 10.9 13.1 10.5 13.2C8.8 13.8 7.5 15.5 7.5 17.5C7.5 20 9.5 22 12 22Z' /%3E%3Cpath d='M2 12C2 14.5 4 16.5 6.5 16.5C8.5 16.5 10.2 15.2 10.8 13.5C10.9 13.1 11 12.5 11 12C11 11.5 10.9 10.9 10.8 10.5C10.2 8.8 8.5 7.5 6.5 7.5C4 7.5 2 9.5 2 12Z' /%3E%3Cpath d='M22 12C22 9.5 20 7.5 17.5 7.5C15.5 7.5 13.8 8.8 13.2 10.5C13.1 10.9 13 11.5 13 12C13 12.5 13.1 13.1 13.2 13.5C13.8 15.2 15.5 16.5 17.5 16.5C20 16.5 22 14.5 22 12Z' /%3E%3C/svg%3E">
+    
+    <!-- 2. Safari Pinned Tab Icon (Mask Icon - Monochromatic Black) -->
+    <link rel="mask-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Ccircle cx='12' cy='12' r='2.5' /%3E%3Cpath d='M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8.5 8.8 10.2 10.5 10.8C10.9 10.9 11.5 11 12 11C12.5 11 13.1 10.9 13.5 10.8C15.2 10.2 16.5 8.5 16.5 6.5C16.5 4 14.5 2 12 2Z' /%3E%3Cpath d='M12 22C14.5 22 16.5 20 16.5 17.5C16.5 15.5 15.2 13.8 13.5 13.2C13.1 13.1 12.5 13 12 13C11.5 13 10.9 13.1 10.5 13.2C8.8 13.8 7.5 15.5 7.5 17.5C7.5 20 9.5 22 12 22Z' /%3E%3Cpath d='M2 12C2 14.5 4 16.5 6.5 16.5C8.5 16.5 10.2 15.2 10.8 13.5C10.9 13.1 11 12.5 11 12C11 11.5 10.9 10.9 10.8 10.5C10.2 8.8 8.5 7.5 6.5 7.5C4 7.5 2 9.5 2 12Z' /%3E%3Cpath d='M22 12C22 9.5 20 7.5 17.5 7.5C15.5 7.5 13.8 8.8 13.2 10.5C13.1 10.9 13 11.5 13 12C13 12.5 13.1 13.1 13.2 13.5C13.8 15.2 15.5 16.5 17.5 16.5C20 16.5 22 14.5 22 12Z' /%3E%3C/svg%3E" color="#000053">
+    
+    <!-- 3. iOS Touch Icon (For Home Screen & Bookmark - Navy on White Background) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000053'%3E%3Crect width='24' height='24' fill='white'/%3E%3Ccircle cx='12' cy='12' r='2.5' /%3E%3Cpath d='M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8.5 8.8 10.2 10.5 10.8C10.9 10.9 11.5 11 12 11C12.5 11 13.1 10.9 13.5 10.8C15.2 10.2 16.5 8.5 16.5 6.5C16.5 4 14.5 2 12 2Z' /%3E%3Cpath d='M12 22C14.5 22 16.5 20 16.5 17.5C16.5 15.5 15.2 13.8 13.5 13.2C13.1 13.1 12.5 13 12 13C11.5 13 10.9 13.1 10.5 13.2C8.8 13.8 7.5 15.5 7.5 17.5C7.5 20 9.5 22 12 22Z' /%3E%3Cpath d='M2 12C2 14.5 4 16.5 6.5 16.5C8.5 16.5 10.2 15.2 10.8 13.5C10.9 13.1 11 12.5 11 12C11 11.5 10.9 10.9 10.8 10.5C10.2 8.8 8.5 7.5 6.5 7.5C4 7.5 2 9.5 2 12Z' /%3E%3Cpath d='M22 12C22 9.5 20 7.5 17.5 7.5C15.5 7.5 13.8 8.8 13.2 10.5C13.1 10.9 13 11.5 13 12C13 12.5 13.1 13.1 13.2 13.5C13.8 15.2 15.5 16.5 17.5 16.5C20 16.5 22 14.5 22 12Z' /%3E%3C/svg%3E">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000053">
+    
+    <!-- Google Fonts: Playfair Display (Serif/Titles), Lato (Sans/Body), Noto Serif TC (Chinese Serif) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet Map CSS & JS (Kept for potential future use as requested) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+      :root {
+        /* English uses Playfair, Chinese falls back to Noto Serif TC */
+        --font-title: 'Playfair Display', 'Noto Serif TC', serif;
+        /* English uses Lato, Chinese falls back to Noto Serif TC (User requested Chinese to be serif) */
+        --font-body: 'Lato', 'Noto Serif TC', sans-serif;
+        --color-navy: #000053;
+        --color-gold: #C5A059;
+      }
+
+      /* Global Font Settings */
+      body {
+        font-family: var(--font-body) !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      h1, h2, h3, h4, h5, h6, .font-serif {
+        font-family: var(--font-title) !important;
+      }
+      
+      /* Hide scrollbar for clean horizontal scrolling */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Global Noise Texture Overlay */
+      .bg-noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Cinematic Ken Burns Effect */
+      @keyframes kenBurns {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.1); }
+      }
+      .animate-ken-burns {
+        animation: kenBurns 20s ease-out infinite alternate;
+      }
+
+      /* Animations */
+      @keyframes titleReveal {
+        0% {
+          opacity: 0;
+          transform: translateY(20px) scale(0.98);
+          filter: blur(8px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      @keyframes subtitleReveal {
+        0% {
+          opacity: 0;
+          letter-spacing: 0.1em;
+          transform: translateY(10px);
+        }
+        100% {
+          opacity: 0.8;
+          letter-spacing: 0.25em;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes modalSlideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(30px) scale(0.98);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-title-reveal {
+        animation: titleReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .animate-subtitle-reveal {
+        opacity: 0;
+        animation: subtitleReveal 2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+      }
+
+      .animate-fade-in-up {
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .animate-modal-enter {
+        animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      /* Text Shadow for better contrast on images */
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      }
+      
+      .text-shadow-lg {
+        text-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      }
+
+      @keyframes lightboxFadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+      @keyframes lightboxZoomIn {
+        0% { opacity: 0; transform: scale(0.95); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      .animate-lightbox-fade {
+        animation: lightboxFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      .animate-lightbox-zoom {
+        animation: lightboxZoomIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-[#f8f8f6] text-stone-900 h-screen w-screen overflow-hidden selection:bg-[#C5A059] selection:text-white">
+    <div id="root" class="h-full w-full"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
