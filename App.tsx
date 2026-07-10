@@ -28,6 +28,16 @@ const highlightText = (text: string, highlight: string) => {
   );
 };
 
+export const getAssetUrl = (url: string | undefined): string => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
+  const baseUrl = import.meta.env.BASE_URL || "/";
+  return baseUrl.endsWith("/") ? `${baseUrl}${cleanUrl}` : `${baseUrl}/${cleanUrl}`;
+};
+
 const getEntryReviewText = (entry: GuideEntry): string => {
   if (typeof entry.guideReview === 'string') {
       return entry.guideReview;
@@ -44,7 +54,8 @@ const getEntryReviewText = (entry: GuideEntry): string => {
 const getEntryPhotos = (entry: GuideEntry): string[] => {
   const photos = entry.photos && entry.photos.length > 0 ? entry.photos : [entry.photoUrl];
   const validPhotos = photos.filter(p => p && p.trim() !== "");
-  return validPhotos.length > 0 ? validPhotos : ["/images/lg/coming_soon.png"];
+  const result = validPhotos.length > 0 ? validPhotos : ["/images/lg/coming_soon.png"];
+  return result.map(p => getAssetUrl(p));
 };
 
 // HARDCODED INITIAL DATA (User modifies code to update this)
@@ -603,13 +614,13 @@ const App: React.FC = () => {
           const found = guideEntries.find(e => e.id === slide.entryId);
           if (found) {
               const photos = getEntryPhotos(found);
-              if (photos && photos.length > 0 && photos[0] && photos[0] !== "/images/lg/coming_soon.png") {
+              if (photos && photos.length > 0 && photos[0] && photos[0] !== getAssetUrl("/images/lg/coming_soon.png")) {
                   return photos[0];
               }
-              return "/images/lg/coming_soon.png";
+              return getAssetUrl("/images/lg/coming_soon.png");
           }
       }
-      return slide.image || "/images/lg/coming_soon.png";
+      return getAssetUrl(slide.image || "/images/lg/coming_soon.png");
   };
 
   // Reset Carousel Index when tab changes
@@ -766,10 +777,10 @@ const App: React.FC = () => {
                       return (
                           <figure key={block.id} className="my-6">
                               <img 
-                                  src={block.url || "/images/lg/coming_soon.png"} 
+                                  src={getAssetUrl(block.url || "/images/lg/coming_soon.png")} 
                                   referrerPolicy="no-referrer"
                                   onError={(e) => {
-                                      (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
+                                      (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
                                   }} 
                                   alt={block.caption || 'Image'} 
                                   className="w-full rounded-lg shadow-md" 
@@ -1255,8 +1266,8 @@ const App: React.FC = () => {
                                 src={getSlideImage(slide)}
                                  referrerPolicy="no-referrer"
                                  onError={(e) => {
-                                     (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
-                                  }} 
+                                      (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
+                                   }} 
                                 alt={slide.title} 
                                 className={`w-full h-full object-cover opacity-80 ${index === carouselIndex ? 'animate-ken-burns' : ''}`} 
                              />
@@ -1314,10 +1325,10 @@ const App: React.FC = () => {
             <div key="about" className="animate-fade-in-up flex flex-col min-h-full">
                   <div className="relative w-full h-48 md:h-64 lg:h-80 bg-stone-200 overflow-hidden shrink-0">
                       <img 
-                          src={appSettings.aboutCoverImageUrl || "/images/lg/coming_soon.png"} 
+                          src={getAssetUrl(appSettings.aboutCoverImageUrl || "/images/lg/coming_soon.png")} 
                           onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
-                          }}
+                                      (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
+                                   }}
                           alt="About Cover" 
                           className="w-full h-full object-cover" 
                       />
@@ -1410,11 +1421,11 @@ const App: React.FC = () => {
                            }}
                        >
                            <img 
-                               src={photo || "/images/lg/coming_soon.png"}
+                               src={getAssetUrl(photo || "/images/lg/coming_soon.png")}
                                 referrerPolicy="no-referrer"
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
-                                }}
+                                      (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
+                                   }}
                                className="w-full h-full object-cover"
                                alt={`${viewingEntry.name} - ${index + 1}`}
                            />
@@ -1556,11 +1567,11 @@ const App: React.FC = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                   <img 
-                    src={entryPhotos[lightboxPhotoIndex] || "/images/lg/coming_soon.png"}
+                    src={getAssetUrl(entryPhotos[lightboxPhotoIndex] || "/images/lg/coming_soon.png")}
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
-                    }} 
+                                      (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
+                                   }} 
                     className="max-w-full max-h-[75vh] md:max-h-[80vh] rounded-lg shadow-2xl object-contain animate-lightbox-zoom"
                     alt={`${viewingEntry.name} full view - ${lightboxPhotoIndex + 1}`}
                   />

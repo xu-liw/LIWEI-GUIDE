@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigateIcon, MapPinIcon, BegoniaIcon, ShareIcon } from './Icons';
 import { GuideEntry, ContentBlock } from '../types';
+import { getAssetUrl } from '../App';
 
 interface PlaceCardProps {
   entry: GuideEntry;
@@ -14,7 +15,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
   onClick,
 }) => {
   // Use user-provided image with fallback
-  const displayImage = entry.photoUrl || "/images/lg/coming_soon.png";
+  const displayImage = getAssetUrl(entry.photoUrl || "/images/lg/coming_soon.png");
 
   // Helper to extract text summary
   const getSummary = (review: string | ContentBlock[]) => {
@@ -75,7 +76,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
             alt={entry.name} 
             className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover/card:scale-105"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "/images/lg/coming_soon.png";
+              (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
             }}
           />
           {/* Guide Rating Badge - Begonia Icons */}
