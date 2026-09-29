@@ -752,6 +752,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigateTab }) => {
       <div className="py-12 text-center border-t border-stone-200 mt-auto bg-[#f4f4f4]">
         <p className="font-serif text-[#000053] font-bold text-lg">LIWEI GUIDE</p>
         <p className="text-xs text-stone-400 uppercase tracking-widest mt-1">EST. 2005</p>
+        <p className="text-xs text-stone-400 mt-2 font-sans">© 2026 LIWEI GUIDE. All Rights Reserved.</p>
       </div>
     </div>
   );

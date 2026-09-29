@@ -1071,6 +1071,7 @@ const App: React.FC = () => {
       <div className="py-12 text-center border-t border-stone-200 mt-auto bg-[#f4f4f4]">
           <p className="font-serif text-[#000053] font-bold text-lg">LIWEI GUIDE</p>
           <p className="text-xs text-stone-400 uppercase tracking-widest mt-1">EST. 2005</p>
+          <p className="text-xs text-stone-400 mt-2 font-sans">© 2026 LIWEI GUIDE. All Rights Reserved.</p>
       </div>
   );
 
@@ -1174,9 +1175,11 @@ const App: React.FC = () => {
                  <div onClick={() => handleTabChange('about')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 mb-2 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />關於</h3>
                 </div>
+                {/* 聯繫入口暫時隱藏，代碼與組件均已完整保留
                 <div onClick={() => handleTabChange('contact')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 mb-2 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />聯繫</h3>
                 </div>
+                */}
                 <div>
                     <h3 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-3"><BegoniaIcon className="w-5 h-5 text-[#000053]" />連結</h3>
                     <div className="space-y-3 pl-2">
@@ -1569,7 +1572,6 @@ const App: React.FC = () => {
                                 <button onClick={() => handleTabChange('dining')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">佳餚</button>
                                 <button onClick={() => handleTabChange('travel')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">旅行</button>
                                 <button onClick={() => handleTabChange('story')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">網誌</button>
-                                <button onClick={() => handleTabChange('contact')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">聯繫</button>
                             </div>
 
                             <div className="flex flex-wrap justify-center gap-4">
@@ -1601,7 +1603,7 @@ const App: React.FC = () => {
             }`}
             onClick={(e) => e.stopPropagation()}
         >
-           <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-stone-100 p-4 flex justify-between items-center z-10">
+           <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-stone-100 p-4 flex justify-between items-center z-40 shadow-sm">
                <div className="flex items-center gap-2">
                    <button 
                      onClick={closeEntry}
@@ -1622,7 +1624,7 @@ const App: React.FC = () => {
                </button>
            </div>
 
-           <div className="w-full h-64 md:h-[450px] relative overflow-hidden group/modalcover bg-stone-950 select-none">
+           <div className="w-full h-64 md:h-[450px] relative isolate overflow-hidden group/modalcover bg-stone-950 select-none z-0">
                {/* Images Layer */}
                <div className="absolute inset-0 w-full h-full">
                    {entryPhotos.map((photo, index) => (
@@ -1744,6 +1746,7 @@ const App: React.FC = () => {
                     <UtensilsIcon className="w-8 h-8 mx-auto text-stone-300 mb-4" />
                     <p className="font-serif text-[#000053] font-bold text-lg">LIWEI GUIDE</p>
                     <p className="text-xs text-stone-400 uppercase tracking-widest mt-1">EST. 2005</p>
+                    <p className="text-xs text-stone-400 mt-2 font-sans">© 2026 LIWEI GUIDE. All Rights Reserved.</p>
                 </div>
            </div>
         </div>
