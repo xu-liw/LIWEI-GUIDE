@@ -1,7 +1,38 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { GuideEntry, AppSettings, LinkItem, ContentBlock } from './types';
-import { UtensilsIcon, XMarkIcon, PhotoIcon, SortIcon, MapPinIcon, Bars3Icon, GlobeIcon, BegoniaIcon, CalendarIcon, NavigateIcon, MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon, ShareIcon } from './components/Icons';
+import { UtensilsIcon, XMarkIcon, PhotoIcon, SortIcon, MapPinIcon, Bars3Icon, GlobeIcon, BegoniaIcon, CalendarIcon, NavigateIcon, MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon, ShareIcon, EnvelopeIcon } from './components/Icons';
 import PlaceCard from './components/PlaceCard';
+import ContactView from './components/ContactView';
+
+// Helper to extract entry coordinate
+const getEntryCoords = (entry: GuideEntry): { lat: number; lng: number } | null => {
+  if (entry.coordinates && typeof entry.coordinates.lat === 'number' && typeof entry.coordinates.lng === 'number') {
+    return entry.coordinates;
+  }
+  const city = entry.city || '';
+  if (city.includes('宜蘭') || city.includes('羅東')) return { lat: 24.6756, lng: 121.7706 };
+  if (city.includes('永和')) return { lat: 25.0088, lng: 121.5165 };
+  if (city.includes('台北') || city.includes('臺北')) return { lat: 25.0330, lng: 121.5654 };
+  if (city.includes('新北')) return { lat: 25.0118, lng: 121.4627 };
+  if (city.includes('東京')) return { lat: 35.6762, lng: 139.6503 };
+  if (city.includes('京都')) return { lat: 35.0116, lng: 135.7681 };
+  if (city.includes('吉隆坡')) return { lat: 3.1390, lng: 101.6869 };
+  if (city.includes('曼谷')) return { lat: 13.7563, lng: 100.5018 };
+  return null;
+};
+
+// Haversine distance in kilometers
+const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 // CONSTANTS & COLORS
 const NAVY = '#000053'; // Navy Blue
@@ -33,8 +64,15 @@ export const getAssetUrl = (url: string | undefined): string => {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
     return url;
   }
-  const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
   const baseUrl = import.meta.env.BASE_URL || "/";
+  // Prevent duplicate base path when getAssetUrl is called multiple times
+  const cleanBase = baseUrl.replace(/^\/|\/$/g, "");
+  if (cleanBase) {
+    if (url.startsWith(baseUrl)) return url;
+    if (url.startsWith(`/${cleanBase}/`)) return url;
+    if (url.startsWith(`${cleanBase}/`)) return `/${url}`;
+  }
+  const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
   return baseUrl.endsWith("/") ? `${baseUrl}${cleanUrl}` : `${baseUrl}/${cleanUrl}`;
 };
 
@@ -55,7 +93,7 @@ const getEntryPhotos = (entry: GuideEntry): string[] => {
   const photos = entry.photos && entry.photos.length > 0 ? entry.photos : [entry.photoUrl];
   const validPhotos = photos.filter(p => p && p.trim() !== "");
   const result = validPhotos.length > 0 ? validPhotos : ["/images/lg/coming_soon.png"];
-  return result.map(p => getAssetUrl(p));
+  return result;
 };
 
 // HARDCODED INITIAL DATA (User modifies code to update this)
@@ -75,6 +113,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "265宜蘭縣羅東鎮大同路42巷2號",
       cuisine: "火鍋",
       category: 'dining',
+      coordinates: { lat: 24.67878, lng: 121.77123 },
       timestamp: 1715423891001,
       updatedAt: 1767052800000 // 2025-12-30
   },
@@ -93,6 +132,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "265宜蘭縣羅東鎮中山路三段180號",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 24.67492, lng: 121.77095 },
       timestamp: 1715423891002,
       updatedAt: 1767052800000 // 2025-12-30
   },
@@ -111,6 +151,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "265宜蘭縣羅東鎮天津路8之7號",
       cuisine: "西式",
       category: 'dining',
+      coordinates: { lat: 24.67812, lng: 121.76865 },
       timestamp: 1715423891003,
       updatedAt: 1767052800000 // 2025-12-30
   },
@@ -121,11 +162,15 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       guideRating: 1,
       guideReview: [{ id: "1", type: "text", content: "充滿職人精神的烤地瓜，但是阿伯有點重聽要大聲一點。" }],
       photoUrl: "/images/restaurant/uncle_roasts_sweet_potatoes.webp",
+      photos: [
+          "/images/restaurant/uncle_roasts_sweet_potatoes.webp"
+      ],
       country: "臺灣",
       city: "新北市",
       address: "234新北市永和區環河西路一段95巷4弄7號",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 25.01185, lng: 121.51268 },
       timestamp: 1715423891004,
       updatedAt: 1767052800000
   },
@@ -135,12 +180,16 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       mapLink: "https://maps.app.goo.gl/2BFsQhfVGHfqgHVUA",
       guideRating: 1,
       guideReview: [{ id: "1", type: "text", content: "意外的好吃，看起來沒有特別衛生，不過製作過程蠻乾淨的。雞肉風味佳，相較起來偏鹹，不過整體是好吃的。麵包鬆軟，生菜新鮮。" }],
-      photoUrl: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxGlC-2pQTebdiaYhTr7V5EwyxvSA1y0p-DsYIUHEYwl29zAc6fD0h-W07OPm-WeXN9PAE69ERMF86P-ccOsBC6bZ-OmWNICdvDROpAtBPyoGc_4J6sKYqE_cHUyPO_pTOUpTONbVCVHCi5=s1360-w1360-h1020-rw",
+      photoUrl: "/images/lg/coming_soon.png",
+      photos: [
+          "/images/lg/coming_soon.png"
+      ],
       country: "臺灣",
       city: "台北市",
       address: "106臺北市大安區羅斯福路三段325號",
       cuisine: "小吃",
       category: 'dining',
+      coordinates: { lat: 25.01756, lng: 121.53321 },
       timestamp: 1715423891005,
       updatedAt: 1767052800000
   },
@@ -151,11 +200,15 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       guideRating: 2,
       guideReview: [{ id: "1", type: "text", content: "暫無評論" }],
       photoUrl: "https://lh3.googleusercontent.com/p/AF1QipNvtX-cjv8eAQOoESoYoIz92XPFqecWIUKizl8-=w900-h482-p-k-no",
+      photos: [
+          "https://lh3.googleusercontent.com/p/AF1QipNvtX-cjv8eAQOoESoYoIz92XPFqecWIUKizl8-=w900-h482-p-k-no"
+      ],
       country: "日本",
       city: "東京",
       address: "日本〒111-0033 Tokyo, Taito City, Hanakawado, 1 Chome−2−8 コーポ 101",
       cuisine: "日式",
       category: 'dining',
+      coordinates: { lat: 35.71265, lng: 139.79905 },
       timestamp: 1715423891006,
       updatedAt: 1767052800000
   },
@@ -172,6 +225,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "日本〒100-0005 Tokyo, Chiyoda City, Marunouchi, 1 Chome−9−1 JR Tokyo Station, Yaesu North Exit 「東京ギフトパレット」 内",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 35.68153, lng: 139.76882 },
       timestamp: 1715423891007,
       updatedAt: 1781822400000
   },
@@ -188,6 +242,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "日本〒100-0005 Tokyo, Chiyoda City, Marunouchi, 1 Chome−9−1 JR Tokyo Station, 改札内 B1F 八重洲地下中央口 グランスタ内 銀の鈴エリア エレベーター前",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 35.68120, lng: 139.76710 },
       timestamp: 1715423891008,
       updatedAt: 1781822400000
   },
@@ -204,6 +259,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "JR Tokyo Station, 構内, 1 Chome-9-1 Marunouchi, Chiyoda City, Tokyo 100-0005日本",
       cuisine: "日式",
       category: 'dining',
+      coordinates: { lat: 35.68138, lng: 139.76755 },
       timestamp: 1715423891009,
       updatedAt: 1781822400000
   },
@@ -220,6 +276,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "日本〒605-0847 Kyoto, Higashiyama Ward, Higashihashizumecho, 23番",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 34.99845, lng: 135.77212 },
       timestamp: 1715423891010,
       updatedAt: 1781822400000
   },
@@ -236,6 +293,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "397-2 Osakacho, Shimogyo Ward, Kyoto, 600-8177日本",
       cuisine: "甜點",
       category: 'dining',
+      coordinates: { lat: 34.99612, lng: 135.75978 },
       timestamp: 1715423891011,
       updatedAt: 1781822400000
   },
@@ -252,6 +310,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "No134, Jalan Petaling, City Centre, 50000 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur, 馬來西亞",
       cuisine: "中式",
       category: 'dining',
+      coordinates: { lat: 3.14152, lng: 101.69835 },
       timestamp: 1715423891012,
       updatedAt: 1781822400000
   },
@@ -268,6 +327,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "999/9 ศูนย์การค้าเซ็นทรัลเวิลด์ ชั้น 6 แขวงปทุมวัน Pathum Wan, Bangkok 10330泰國",
       cuisine: "西式",
       category: 'dining',
+      coordinates: { lat: 13.74663, lng: 100.53934 },
       timestamp: 1715423891013,
       updatedAt: 1781822400000
   },
@@ -284,6 +344,7 @@ const INITIAL_ENTRIES: GuideEntry[] = [
       address: "30-3, Jalan Raja Alang Chow Kit, Kampung Baru, 50300 Kuala Lumpur, 馬來西亞",
       cuisine: "印尼料理",
       category: 'dining',
+      coordinates: { lat: 3.16458, lng: 101.69982 },
       timestamp: 1715423891014,
       updatedAt: 1781822400000
   }
@@ -317,34 +378,26 @@ const DINING_SLIDES = [
         title: "阿伯烤地瓜" 
     },
     { 
-        image: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxGlC-2pQTebdiaYhTr7V5EwyxvSA1y0p-DsYIUHEYwl29zAc6fD0h-W07OPm-WeXN9PAE69ERMF86P-ccOsBC6bZ-OmWNICdvDROpAtBPyoGc_4J6sKYqE_cHUyPO_pTOUpTONbVCVHCi5=s1360-w1360-h1020-rw", 
+        image: "/images/lg/coming_soon.png", 
         entryId: 1715423891005, 
         subtitle: "當月傑出餐廳",
         title: "埃及沙威瑪王" 
     }
 ];
 
-// 2. Travel Slides
+// 2. Travel Slides - Use coming_soon.png without generated titles
 const TRAVEL_SLIDES = [
-    { image: "https://picsum.photos/id/1036/1600/900", entryId: 0, subtitle: "探索秘境", title: "山林之旅" },
-    { image: "https://picsum.photos/id/1015/1600/900", entryId: 0, subtitle: "推薦行程", title: "海岸線的呼喚" },
-    { image: "https://picsum.photos/id/1040/1600/900", entryId: 0, subtitle: "深度旅遊", title: "古堡巡禮" },
-    { image: "https://picsum.photos/id/1039/1600/900", entryId: 0, subtitle: "城市漫遊", title: "城市漫遊" },
-    { image: "https://picsum.photos/id/1038/1600/900", entryId: 0, subtitle: "極地探險", title: "極地探險" },
+    { image: "/images/lg/coming_soon.png", entryId: 0, subtitle: "", title: "" }
 ];
 
-// 3. Story Slides
+// 3. Story Slides - Use coming_soon.png without generated titles
 const STORY_SLIDES = [
-    { image: "https://picsum.photos/id/1069/1600/900", entryId: 0, subtitle: "味覺記憶", title: "關於味覺的記憶" },
-    { image: "https://picsum.photos/id/1062/1600/900", entryId: 0, subtitle: "生活隨筆", title: "那些年我們一起去的餐廳" },
-    { image: "https://picsum.photos/id/1059/1600/900", entryId: 0, subtitle: "獨家食譜", title: "廚房裡的秘密" },
-    { image: "https://picsum.photos/id/1050/1600/900", entryId: 0, subtitle: "深夜食堂", title: "深夜食堂" },
-    { image: "https://picsum.photos/id/1049/1600/900", entryId: 0, subtitle: "咖啡與書", title: "咖啡與書" },
+    { image: "/images/lg/coming_soon.png", entryId: 0, subtitle: "", title: "" }
 ];
 
 const INITIAL_SETTINGS: AppSettings = {
     coverImageUrl: '',
-    aboutCoverImageUrl: 'https://duk.tw/WPB8QC.jpg',
+    aboutCoverImageUrl: '/images/lg/coming_soon.png',
     aboutContent: [
         { 
             id: '1', 
@@ -360,10 +413,16 @@ const INITIAL_SETTINGS: AppSettings = {
 const App: React.FC = () => {
   // App State
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'home' | 'dining' | 'travel' | 'story' | 'about'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'dining' | 'travel' | 'story' | 'about' | 'contact'>('home');
   const [guideEntries] = useState<GuideEntry[]>(INITIAL_ENTRIES);
   const [appSettings] = useState<AppSettings>(INITIAL_SETTINGS);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  
+  // Location & Distance Sort State
+  const [sortByDistance, setSortByDistance] = useState<boolean>(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   
   // Carousel State
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -398,6 +457,7 @@ const App: React.FC = () => {
 
   // Detail Modal State (View Restaurant)
   const [viewingEntry, setViewingEntry] = useState<GuideEntry | null>(null);
+  const [isClosingEntry, setIsClosingEntry] = useState(false);
   
   // Multi-photo slider in details modal
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -457,6 +517,20 @@ const App: React.FC = () => {
         window.removeEventListener("keydown", handleKeyDown);
     };
   }, [lightboxOpen, viewingEntry]);
+
+  // Keydown listener for Viewing Entry Modal (ESC to close with smooth animation)
+  useEffect(() => {
+    if (!viewingEntry || lightboxOpen || isClosingEntry) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+            closeEntry();
+        }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [viewingEntry, lightboxOpen, isClosingEntry]);
 
   // Compute all matching suggestions across dining, travel, and story pages
   const searchSuggestions = useMemo(() => {
@@ -543,7 +617,7 @@ const App: React.FC = () => {
         const id = params.get('id');
 
         // Sync Tab
-        if (tab && ['home', 'dining', 'travel', 'story', 'about'].includes(tab)) {
+        if (tab && ['home', 'dining', 'travel', 'story', 'about', 'contact'].includes(tab)) {
             setActiveTab(tab as any);
         } else {
             setActiveTab('home'); // Default
@@ -564,7 +638,7 @@ const App: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     const id = params.get('id');
-    if (tab && ['home', 'dining', 'travel', 'story', 'about'].includes(tab)) {
+    if (tab && ['home', 'dining', 'travel', 'story', 'about', 'contact'].includes(tab)) {
         setActiveTab(tab as any);
     }
     if (id) {
@@ -670,6 +744,7 @@ const App: React.FC = () => {
   };
 
   const openEntry = (entry: GuideEntry) => {
+      setIsClosingEntry(false);
       setViewingEntry(entry);
       setActivePhotoIndex(0);
       setLightboxOpen(false);
@@ -683,12 +758,17 @@ const App: React.FC = () => {
   };
 
   const closeEntry = () => {
-      setViewingEntry(null);
-      setActivePhotoIndex(0);
-      setLightboxOpen(false);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('id');
-      window.history.pushState({}, '', url.toString());
+      if (isClosingEntry) return;
+      setIsClosingEntry(true);
+      setTimeout(() => {
+          setViewingEntry(null);
+          setIsClosingEntry(false);
+          setActivePhotoIndex(0);
+          setLightboxOpen(false);
+          const url = new URL(window.location.href);
+          url.searchParams.delete('id');
+          window.history.pushState({}, '', url.toString());
+      }, 260);
   };
 
   // Carousel Manual Controls
@@ -741,8 +821,6 @@ const App: React.FC = () => {
       const entry = guideEntries.find(e => e.id === slide.entryId);
       if (entry) {
           openEntry(entry);
-      } else if (slide.entryId !== 0) {
-          alert("此資料尚未建立");
       }
   };
 
@@ -863,6 +941,63 @@ const App: React.FC = () => {
     }
   }, [uniqueCuisines, filterCuisine]);
 
+  // Compute distances of all entries relative to userCoords
+  const entryDistances = useMemo(() => {
+    if (!userCoords) return {} as Record<number, number>;
+    const map: Record<number, number> = {};
+    guideEntries.forEach((entry) => {
+      const coords = getEntryCoords(entry);
+      if (coords) {
+        map[entry.id] = calculateDistanceKm(userCoords.lat, userCoords.lng, coords.lat, coords.lng);
+      }
+    });
+    return map;
+  }, [userCoords, guideEntries]);
+
+  const handleSortByDistance = () => {
+    if (sortByDistance) {
+      setSortByDistance(false);
+      return;
+    }
+
+    if (userCoords) {
+      setSortByDistance(true);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setLocationError("您的瀏覽器不支援地理位置定位功能");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setSortByDistance(true);
+        setIsLocating(false);
+      },
+      (err) => {
+        console.warn("Geolocation warning:", err);
+        setIsLocating(false);
+        let msg = "無法取得您的目前位置，請確認已允許瀏覽器定位權限。";
+        if (err.code === err.PERMISSION_DENIED) {
+          msg = "您已拒絕位置存取權限。若要依距離排序，請在瀏覽器設定中開啟定位權限。";
+        }
+        setLocationError(msg);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
+  };
+
   // 3. Apply user filters to the isolated entries
   const processedEntries = useMemo(() => {
     let result = [...currentTabEntries];
@@ -880,21 +1015,35 @@ const App: React.FC = () => {
         });
     }
 
-    // UPDATED: Default Sort by Date (Newest first if desc)
-    result.sort((a, b) => {
-        const timeA = a.updatedAt || a.timestamp;
-        const timeB = b.updatedAt || b.timestamp;
-        
-        // Primary Sort: Date
-        if (timeA !== timeB) {
-             return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-        }
-        
-        // Secondary Sort: ID (Creation order) for deterministic sort
-        return sortOrder === 'desc' ? b.id - a.id : a.id - b.id;
-    });
+    if (sortByDistance && userCoords) {
+        // Sort by distance ascending (closest first)
+        result.sort((a, b) => {
+            const distA = entryDistances[a.id];
+            const distB = entryDistances[b.id];
+            if (distA !== undefined && distB !== undefined) {
+                return distA - distB;
+            }
+            if (distA !== undefined) return -1;
+            if (distB !== undefined) return 1;
+            return 0;
+        });
+    } else {
+        // UPDATED: Default Sort by Date (Newest first if desc)
+        result.sort((a, b) => {
+            const timeA = a.updatedAt || a.timestamp;
+            const timeB = b.updatedAt || b.timestamp;
+            
+            // Primary Sort: Date
+            if (timeA !== timeB) {
+                 return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+            }
+            
+            // Secondary Sort: ID (Creation order) for deterministic sort
+            return sortOrder === 'desc' ? b.id - a.id : a.id - b.id;
+        });
+    }
     return result;
-  }, [currentTabEntries, sortOrder, filterCountry, filterCity, filterCuisine, searchQuery]);
+  }, [currentTabEntries, sortOrder, sortByDistance, userCoords, entryDistances, filterCountry, filterCity, filterCuisine, searchQuery]);
 
   const toggleSort = () => {
       setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
@@ -938,10 +1087,9 @@ const App: React.FC = () => {
               await navigator.share(shareData);
           } else {
               await navigator.clipboard.writeText(shareUrl);
-              alert('連結已複製到剪貼簿！');
           }
       } catch (err) {
-          console.error('Error sharing:', err);
+          console.warn('Share warning:', err);
       }
   };
 
@@ -1004,34 +1152,37 @@ const App: React.FC = () => {
       <div className={`fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-[90] transform transition-transform duration-300 ease-in-out flex flex-col ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
          <div className="p-6 flex justify-between items-center border-b border-stone-100">
             <h2 className="text-xl font-bold text-[#000053]">LIWEI GUIDE</h2>
-            <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-stone-100 rounded-full transition-transform active:scale-95">
+            <button onClick={() => setIsMenuOpen(false)} className="p-2 hover:bg-stone-100 rounded-full transition-transform active:scale-95 cursor-pointer">
                 <XMarkIcon className="w-6 h-6 text-stone-500" />
             </button>
          </div>
          
          <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
-                <div onClick={() => handleTabChange('home')} className="cursor-pointer group hover:bg-stone-50 rounded-lg p-2 -mx-2 transition-all active:scale-95 duration-200">
+                <div onClick={() => handleTabChange('home')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />首頁</h3>
                 </div>
-                 <div onClick={() => handleTabChange('dining')} className="cursor-pointer group hover:bg-stone-50 rounded-lg p-2 -mx-2 transition-all active:scale-95 duration-200">
+                 <div onClick={() => handleTabChange('dining')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />佳餚</h3>
                 </div>
-                <div onClick={() => handleTabChange('travel')} className="cursor-pointer group hover:bg-stone-50 rounded-lg p-2 -mx-2 transition-all active:scale-95 duration-200">
+                <div onClick={() => handleTabChange('travel')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />旅行</h3>
                 </div>
-                <div onClick={() => handleTabChange('story')} className="cursor-pointer group hover:bg-stone-50 rounded-lg p-2 -mx-2 transition-all active:scale-95 duration-200">
+                <div onClick={() => handleTabChange('story')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />網誌</h3>
                 </div>
-                <div onClick={() => handleTabChange('about')} className="cursor-pointer group hover:bg-stone-50 rounded-lg p-2 -mx-2 transition-all active:scale-95 duration-200">
+                 <div onClick={() => handleTabChange('about')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
                     <h3 className="text-lg font-bold text-stone-800 mb-2 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />關於</h3>
+                </div>
+                <div onClick={() => handleTabChange('contact')} className="cursor-pointer group hover:bg-stone-50 rounded-xl p-2.5 -mx-2 transition-all active:scale-95 duration-200">
+                    <h3 className="text-lg font-bold text-stone-800 mb-2 flex items-center gap-3 group-hover:text-[#000053] transition-colors"><BegoniaIcon className="w-5 h-5 text-[#000053] transition-colors group-hover:text-[#C5A059]" />聯繫</h3>
                 </div>
                 <div>
                     <h3 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-3"><BegoniaIcon className="w-5 h-5 text-[#000053]" />連結</h3>
                     <div className="space-y-3 pl-2">
                         {appSettings.socialLinks && appSettings.socialLinks.length > 0 ? (
                             appSettings.socialLinks.map((link) => (
-                                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 p-3 rounded-lg bg-stone-50 hover:bg-stone-100 transition-all group active:scale-95">
+                                <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 hover:bg-stone-100 transition-all group active:scale-95">
                                     <div className="bg-white p-2 rounded-full shadow-sm text-[#000053] transition-all duration-200 group-hover:text-[#C5A059] group-hover:scale-110"><GlobeIcon className="w-4 h-4" /></div>
                                     <span className="text-stone-700 font-medium group-hover:text-[#000053]">{link.label}</span>
                                 </a>
@@ -1177,7 +1328,7 @@ const App: React.FC = () => {
                             {homeSearchResults.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {homeSearchResults.map((entry, idx) => (
-                                        <PlaceCard key={entry.id} entry={entry} index={idx} onClick={openEntry} />
+                                        <PlaceCard key={entry.id} entry={entry} index={idx} onClick={openEntry} distanceKm={entryDistances[entry.id]} />
                                     ))}
                                 </div>
                             ) : (
@@ -1268,30 +1419,35 @@ const App: React.FC = () => {
                                  onError={(e) => {
                                       (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
                                    }} 
-                                alt={slide.title} 
+                                alt={slide.title || "Banner"} 
                                 className={`w-full h-full object-cover opacity-80 ${index === carouselIndex ? 'animate-ken-burns' : ''}`} 
                              />
-                             <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/80 to-transparent text-white">
-                                 {/* Improved Typography: Small subtitle above, Title below, no colon */}
-                                 <p className="text-sm md:text-base uppercase tracking-[0.3em] font-medium text-white/90 mb-1">{slide.subtitle}</p>
-                                 <h2 className="text-3xl md:text-4xl font-bold font-serif mb-2 tracking-wide text-shadow">{slide.title}</h2>
-                                 <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mt-4 text-[#C5A059]">更多資訊...</p>
-                             </div>
+                             {slide.title && slide.title.trim() !== "" && (
+                               <div className="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/80 to-transparent text-white">
+                                   {slide.subtitle && <p className="text-sm md:text-base uppercase tracking-[0.3em] font-medium text-white/90 mb-1">{slide.subtitle}</p>}
+                                   <h2 className="text-3xl md:text-4xl font-bold font-serif mb-2 tracking-wide text-shadow">{slide.title}</h2>
+                                   <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mt-4 text-[#C5A059]">更多資訊...</p>
+                               </div>
+                             )}
                          </div>
                      ))}
                      
-                     <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-90"><ChevronLeftIcon className="w-8 h-8" /></button>
-                     <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-90"><ChevronRightIcon className="w-8 h-8" /></button>
+                     {currentSlides.length > 1 && (
+                       <>
+                         <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-90"><ChevronLeftIcon className="w-8 h-8" /></button>
+                         <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-black/30 hover:bg-black/60 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-90"><ChevronRightIcon className="w-8 h-8" /></button>
 
-                     <div className="absolute bottom-4 right-4 z-20 flex gap-2">
-                         {currentSlides.map((_, idx) => (
-                             <div 
-                                key={idx} 
-                                onClick={(e) => goToSlide(e, idx)} 
-                                className={`w-2 h-2 rounded-full transition-all cursor-pointer hover:scale-125 ${idx === carouselIndex ? 'bg-[#C5A059] w-6' : 'bg-white/50'}`} 
-                             />
-                         ))}
-                     </div>
+                         <div className="absolute bottom-4 right-4 z-20 flex gap-2">
+                             {currentSlides.map((_, idx) => (
+                                 <div 
+                                    key={idx} 
+                                    onClick={(e) => goToSlide(e, idx)} 
+                                    className={`w-2 h-2 rounded-full transition-all cursor-pointer hover:scale-125 ${idx === carouselIndex ? 'bg-[#C5A059] w-6' : 'bg-white/50'}`} 
+                                 />
+                             ))}
+                         </div>
+                       </>
+                     )}
                  </div>
 
                  <div className="bg-white border-b border-stone-200 sticky top-0 z-20 shadow-sm py-3 px-4">
@@ -1306,14 +1462,70 @@ const App: React.FC = () => {
                                 <input type="text" placeholder={`搜尋${searchPlaceholderWord}...`} className="pl-4 pr-10 py-1.5 rounded-lg border border-stone-200 text-sm w-full md:w-64 focus:border-[#000053] outline-none bg-stone-50 font-sans" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                                 <MagnifyingGlassIcon className="w-4 h-4 text-stone-400 absolute right-2 top-1/2 -translate-y-1/2" />
                             </div>
-                            <button onClick={toggleSort} className="flex items-center gap-1 text-[#000053] hover:bg-[#000053] hover:text-white px-3 py-1.5 rounded-lg transition-colors border border-[#000053]/20 shrink-0 active:scale-95"><SortIcon className={`w-4 h-4 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} /></button>
+
+                            {/* Distance Sort Button (Location-based closest first) */}
+                            <button 
+                                onClick={handleSortByDistance} 
+                                disabled={isLocating}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all border shrink-0 active:scale-95 cursor-pointer text-xs font-medium font-sans ${
+                                    sortByDistance
+                                        ? 'bg-[#000053] text-white border-[#000053] shadow-xs font-bold' 
+                                        : 'text-[#000053] bg-stone-50 hover:bg-stone-100 border-stone-200'
+                                }`}
+                                title={sortByDistance ? "已開啟距離排序，點擊切換回預設時間排序" : "定位我的位置並依距離由近到遠排序"}
+                            >
+                                <NavigateIcon className={`w-3.5 h-3.5 ${sortByDistance ? 'text-[#C5A059]' : 'text-[#000053]'} ${isLocating ? 'animate-spin' : ''}`} />
+                                <span>{isLocating ? '定位中...' : sortByDistance ? '距離近→遠' : '距離排序'}</span>
+                            </button>
+
+                            {/* Time Sort Button */}
+                            <button 
+                                onClick={() => {
+                                    if (sortByDistance) setSortByDistance(false);
+                                    toggleSort();
+                                }} 
+                                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors border shrink-0 active:scale-95 text-xs font-sans ${
+                                    !sortByDistance
+                                        ? 'text-[#000053] hover:bg-[#000053] hover:text-white border-[#000053]/20'
+                                        : 'text-stone-400 border-stone-200 hover:text-[#000053]'
+                                }`}
+                                title={`時間排序：${sortOrder === 'desc' ? '最新' : '最舊'}`}
+                            >
+                                <SortIcon className={`w-3.5 h-3.5 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} />
+                                <span className="hidden sm:inline">{sortOrder === 'desc' ? '最新' : '最舊'}</span>
+                            </button>
                         </div>
                      </div>
                  </div>
 
-                 <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-12 min-h-[50vh]">
+                  <div className="p-4 md:p-8 max-w-7xl mx-auto w-full pb-12 min-h-[50vh]">
+                    {sortByDistance && userCoords && (
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 bg-[#000053]/5 border border-[#000053]/15 rounded-xl px-4 py-3 text-sm text-[#000053]">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#C5A059] animate-pulse shrink-0"></div>
+                                <span className="font-medium font-sans">
+                                    已定位您的目前位置，目前正依<strong>距離由近到遠</strong>為您排序
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setSortByDistance(false)}
+                                className="text-xs text-[#000053]/80 hover:text-[#000053] font-semibold underline underline-offset-2 shrink-0 cursor-pointer"
+                            >
+                                恢復時間排序
+                            </button>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {processedEntries.map((entry, idx) => (<PlaceCard key={entry.id} entry={entry} index={idx} onClick={openEntry} />))}
+                        {processedEntries.map((entry, idx) => (
+                            <PlaceCard 
+                                key={entry.id} 
+                                entry={entry} 
+                                index={idx} 
+                                onClick={openEntry} 
+                                distanceKm={entryDistances[entry.id]}
+                            />
+                        ))}
                     </div>
                     {processedEntries.length === 0 && (<div className="text-center py-20 text-stone-500 col-span-full">沒有符合條件的項目</div>)}
                  </div>
@@ -1352,11 +1564,12 @@ const App: React.FC = () => {
                       <div className="pt-8 border-t border-stone-200 text-center">
                             <h3 className="text-lg font-bold text-stone-700 mb-6 font-serif">LIWEI GUIDE</h3>
                             
-                            <div className="flex flex-wrap justify-center gap-4 mb-6">
-                                <button onClick={() => handleTabChange('home')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif">首頁</button>
-                                <button onClick={() => handleTabChange('dining')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif">佳餚</button>
-                                <button onClick={() => handleTabChange('travel')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif">旅行</button>
-                                <button onClick={() => handleTabChange('story')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif">網誌</button>
+                             <div className="flex flex-wrap justify-center gap-4 mb-6">
+                                <button onClick={() => handleTabChange('home')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">首頁</button>
+                                <button onClick={() => handleTabChange('dining')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">佳餚</button>
+                                <button onClick={() => handleTabChange('travel')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">旅行</button>
+                                <button onClick={() => handleTabChange('story')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">網誌</button>
+                                <button onClick={() => handleTabChange('contact')} className="px-5 py-2 rounded-full border border-stone-200 hover:border-[#000053] hover:text-[#000053] text-stone-600 transition-all active:scale-95 font-serif cursor-pointer">聯繫</button>
                             </div>
 
                             <div className="flex flex-wrap justify-center gap-4">
@@ -1374,28 +1587,35 @@ const App: React.FC = () => {
             </div>
         )}
 
+        {activeTab === 'contact' && (
+            <ContactView onNavigateTab={handleTabChange} />
+        )}
+
       </main>
 
       {/* Viewing Details Modal (Global Modal) */}
       {viewingEntry && (
         <div 
-            className="fixed inset-0 bg-white z-[80] overflow-y-auto animate-modal-enter"
+            className={`fixed inset-0 bg-white z-[80] overflow-y-auto ${
+                isClosingEntry ? "animate-modal-exit pointer-events-none" : "animate-modal-enter"
+            }`}
             onClick={(e) => e.stopPropagation()}
         >
            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-stone-100 p-4 flex justify-between items-center z-10">
                <div className="flex items-center gap-2">
                    <button 
                      onClick={closeEntry}
-                     className="flex items-center gap-1 text-stone-500 hover:text-[#000053] transition-colors active:scale-95"
+                     className="flex items-center gap-1.5 px-3 py-1.5 text-stone-600 hover:text-[#000053] hover:bg-stone-100 transition-all active:scale-95 cursor-pointer rounded-full"
+                     title="關閉"
                    >
-                      <XMarkIcon className="w-6 h-6" />
-                      <span className="font-bold">關閉</span>
+                      <XMarkIcon className="w-5 h-5 transition-transform" />
+                      <span className="font-bold text-sm">關閉</span>
                    </button>
                </div>
                
                <button 
                  onClick={() => handleShareEntry(viewingEntry)}
-                 className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full text-stone-600 font-bold text-sm transition-all active:scale-95"
+                 className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 px-3.5 py-1.5 rounded-full text-stone-600 font-bold text-sm transition-all active:scale-95"
                >
                   <ShareIcon className="w-4 h-4" />
                   分享
@@ -1497,7 +1717,7 @@ const App: React.FC = () => {
            </div>
 
            <div className="max-w-3xl mx-auto px-6 py-10 md:py-16">
-                <div className="bg-stone-50 border border-stone-200 rounded-xl p-6 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <MapPinIcon className="w-6 h-6 text-[#000053] mt-1 shrink-0" />
                         <div>
@@ -1509,7 +1729,7 @@ const App: React.FC = () => {
                       href={viewingEntry.mapLink} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="bg-[#000053] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#000053]/80 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      className="bg-[#000053] text-white px-5 py-2.5 rounded-full font-bold text-sm hover:bg-[#000053]/80 transition-all active:scale-95 flex items-center justify-center gap-2"
                     >
                         <NavigateIcon className="w-4 h-4" />
                         導航
@@ -1572,7 +1792,7 @@ const App: React.FC = () => {
                     onError={(e) => {
                                       (e.target as HTMLImageElement).src = getAssetUrl("/images/lg/coming_soon.png");
                                    }} 
-                    className="max-w-full max-h-[75vh] md:max-h-[80vh] rounded-lg shadow-2xl object-contain animate-lightbox-zoom"
+                    className="max-w-full max-h-[75vh] md:max-h-[80vh] rounded-2xl shadow-2xl object-contain animate-lightbox-zoom"
                     alt={`${viewingEntry.name} full view - ${lightboxPhotoIndex + 1}`}
                   />
               </div>

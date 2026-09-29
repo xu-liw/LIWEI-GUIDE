@@ -23,10 +23,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet Map CSS & JS (Kept for potential future use as requested) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
       :root {
@@ -129,6 +125,17 @@
         }
       }
 
+      @keyframes modalSlideDown {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(24px) scale(0.98);
+        }
+      }
+
       .animate-title-reveal {
         animation: titleReveal 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
@@ -143,7 +150,11 @@
       }
 
       .animate-modal-enter {
-        animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .animate-modal-exit {
+        animation: modalSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       
       /* Text Shadow for better contrast on images */

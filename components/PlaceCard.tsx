@@ -7,12 +7,24 @@ interface PlaceCardProps {
   entry: GuideEntry;
   index: number;
   onClick?: (entry: GuideEntry) => void;
+  distanceKm?: number;
 }
+
+const formatDistance = (km: number): string => {
+  if (km < 1) {
+    return `${Math.round(km * 1000)} m`;
+  }
+  if (km < 10) {
+    return `${km.toFixed(1)} km`;
+  }
+  return `${Math.round(km)} km`;
+};
 
 const PlaceCard: React.FC<PlaceCardProps> = ({ 
   entry, 
   index, 
   onClick,
+  distanceKm,
 }) => {
   // Use user-provided image with fallback
   const displayImage = getAssetUrl(entry.photoUrl || "/images/lg/coming_soon.png");
@@ -50,16 +62,15 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        alert('連結已複製到剪貼簿！');
       }
     } catch (err) {
-      console.error('Error sharing:', err);
+      console.warn('Share canceled or error:', err);
     }
   };
 
   return (
     <div 
-      className="flex flex-col w-full h-full bg-white rounded-none md:rounded-xl shadow-lg border-t-4 border-[#000053] overflow-hidden relative group/card cursor-pointer transform transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:border-[#C5A059] active:scale-[0.98] active:shadow-md"
+      className="flex flex-col w-full h-full bg-white rounded-none shadow-lg border-t-4 border-[#000053] overflow-hidden relative group/card cursor-pointer transform transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:border-[#C5A059] active:scale-[0.98] active:shadow-md"
       onClick={() => onClick && onClick(entry)}
     >
       
@@ -80,7 +91,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
             }}
           />
           {/* Guide Rating Badge - Begonia Icons */}
-          <div className="absolute top-0 left-0 bg-[#000053]/90 backdrop-blur-sm text-white px-3 py-2 shadow-md z-10 rounded-br-lg">
+          <div className="absolute top-0 left-0 bg-[#000053]/90 backdrop-blur-sm text-white px-3 py-2 shadow-md z-10 rounded-none">
              <div className="flex gap-1">
                {Array.from({ length: entry.guideRating }).map((_, i) => (
                  <BegoniaIcon key={i} className="w-5 h-5 text-white" />
@@ -106,13 +117,21 @@ const PlaceCard: React.FC<PlaceCardProps> = ({
                )}
              </div>
 
-             {/* Sub-info: Cuisine & Address */}
-             <div className="flex flex-col gap-1 text-sm text-stone-600 font-sans">
-                {entry.cuisine && (
-                  <span className="inline-flex items-center self-start px-2 py-0.5 rounded bg-stone-100 font-semibold text-stone-700 text-xs">
-                    {entry.cuisine}
-                  </span>
-                )}
+             {/* Sub-info: Cuisine, Distance & Address */}
+             <div className="flex flex-col gap-1.5 text-sm text-stone-600 font-sans">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {entry.cuisine && (
+                    <span className="inline-flex items-center self-start px-2 py-0.5 rounded-none bg-stone-100 font-semibold text-stone-700 text-xs">
+                      {entry.cuisine}
+                    </span>
+                  )}
+                  {distanceKm !== undefined && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none bg-[#000053]/10 text-[#000053] font-semibold text-xs border border-[#000053]/15">
+                      <NavigateIcon className="w-3 h-3 text-[#C5A059]" />
+                      <span>{formatDistance(distanceKm)}</span>
+                    </span>
+                  )}
+                </div>
                 {entry.address && (
                   <div className="flex items-center gap-1 opacity-80 truncate w-full">
                     <MapPinIcon className="w-3 h-3 shrink-0" />
